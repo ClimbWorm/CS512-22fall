@@ -4,7 +4,7 @@ from torch.utils.data.dataset import T_co
 from torch.utils.data import IterableDataset, DataLoader
 import numpy as np
 from scripts.utils import DEVICE, LOG_PATH
-from model.DCRNN import DCRNNModel
+from model.DCRNN import DCRNN
 
 
 class SensorDataset(IterableDataset):
@@ -18,7 +18,7 @@ class SensorDataset(IterableDataset):
 
 
 class TrainScheduler:
-    def __init__(self, model: DCRNNModel, dataloader: DataLoader):
-        self.model: DCRNNModel = model
+    def __init__(self, model: DCRNN, dataloader: DataLoader):
+        self.model: DCRNN = model
         # self.writer = SummaryWriter(f"runs/{LOG_PATH}")
         self.data = dataloader
