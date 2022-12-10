@@ -1,6 +1,10 @@
 import pandas as pd
 from typing import List, Tuple, Dict
 import numpy as np
+import torch
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+LOG_PATH = ""
 
 
 def gen_adj_mat(dist: pd.DataFrame, sensor_ids: List[int], k: float = 0.1) -> Tuple[Dict[int, int], np.ndarray]:
