@@ -1,5 +1,5 @@
 from torch import nn
 
 
-class DecoderModel(nn.Module):
+class DCRNNModel(nn.Module):
     pass
