@@ -1,5 +1,19 @@
-from torch import nn
+import torch
+import torch.nn as nn
 
 
-class DCRNNModel(nn.Module):
-    pass
+
+class Encoder(nn.Module):
+
+
+
+
+
+
+class Decoder(nn.Module):
+
+
+
+
+
+class DCRNN(nn.Module):
