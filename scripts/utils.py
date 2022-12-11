@@ -10,6 +10,32 @@ LOG_PATH = ""
 CP_PATH = "checkpoints"
 
 
+class SensorDataloader:
+    def __init__(self, features, labels, batch_size: int = 64, pad: bool = True, shuffle: bool = True):
+        self.batch_size = batch_size
+        if pad:
+            # pad the last batch using the last sample
+            pad_size = (batch_size - (len(features) % batch_size)) % batch_size
+            self.features = np.concatenate([features, np.repeat(features[-1:], pad_size, axis=0)], axis=0)
+            self.labels = np.concatenate([labels, np.repeat(labels[-1:], pad_size, axis=0)], axis=0)
+        else:
+            self.features = features
+            self.labels = labels
+        self.num_rows = len(self.features)  # after padding
+        if shuffle:
+            perm = np.random.permutation(self.num_rows)
+            self.features, self.labels = self.features[perm], self.labels[perm]
+        self.num_batches = self.num_rows // self.batch_size
+
+    def gen_sample(self):
+        for b in range(self.num_batches):
+            st, ed = b * self.batch_size, (b + 1) * self.batch_size
+            yield self.features[st: ed, ...], self.labels[st: ed, ...]
+
+    def __iter__(self):
+        return self.gen_sample()
+
+
 class EarlyStopper:
     """Reference: https://stackoverflow.com/questions/71998978/early-stopping-in-pytorch"""
 
@@ -143,14 +169,13 @@ def generate_data(df, x_length, y_length):
     y = np.stack(y, axis=0)
     return x, y
 
+
 def split_dataset(x, y):
     num_samples = x.shape[0]
     num_test = round(num_samples * 0.2)
     num_train = round(num_samples * 0.7)
     num_val = num_samples - num_test - num_train
-    num_test, num_train, num_val
-    train_list, val_list, test_list = [], [], []
-    
+
     x_train, y_train = x[:num_train], y[:num_train]
     # val
     x_val = x[num_train: num_train + num_val]
@@ -158,16 +183,4 @@ def split_dataset(x, y):
     # test
     x_test, y_test = x[-num_test:], y[-num_test:]
 
-    train_list.append(x_train)
-    train_list.append(y_train)
-    #print(train_list)
-    
-    val_list.append(x_val)
-    val_list.append(y_val)
-    #print(val_list)
-    
-    test_list.append(x_test)
-    test_list.append(y_test)
-    #print(test_list)
-    
-    return train_list, val_list, test_list
+    return SensorDataloader(x_train, y_train), SensorDataloader(x_val, y_val), SensorDataloader(x_test, y_test)
