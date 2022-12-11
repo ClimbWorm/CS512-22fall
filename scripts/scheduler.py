@@ -1,43 +1,18 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, CP_PATH
+from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, SensorLoader
 from typing import Optional, Union, Any, Dict, Tuple
 from model.DCRNN import DCRNN
 from tqdm import tqdm
 
 
-class SensorDataloader:
-    def __init__(self, features, labels, batch_size, pad: bool = True, shuffle: bool = True):
-        self.batch_size = batch_size
-        if pad:
-            # pad the last batch using the last sample
-            pad_size = (batch_size - (len(features) % batch_size)) % batch_size
-            self.features = np.concatenate([features, np.repeat(features[-1:], pad_size, axis=0)], axis=0)
-            self.labels = np.concatenate([labels, np.repeat(labels[-1:], pad_size, axis=0)], axis=0)
-        else:
-            self.features = features
-            self.labels = labels
-        self.num_rows = len(self.features)  # after padding
-        if shuffle:
-            perm = np.random.permutation(self.num_rows)
-            self.features, self.labels = self.features[perm], self.labels[perm]
-        self.num_batches = self.num_rows // self.batch_size
-
-    def gen_sample(self):
-        for b in range(self.num_batches):
-            st, ed = b * self.batch_size, (b + 1) * self.batch_size
-            yield self.features[st: ed, ...], self.labels[st: ed, ...]
-
-    def __iter__(self):
-        return self.gen_sample()
-
-
 class TrainScheduler:
-    def __init__(self, adj_mat: np.ndarray, train_loader: SensorDataloader, val_loader: SensorDataloader,
-                 test_loader: SensorDataloader, input_dim: int, output_dim: int, horizon: int, seq_size: int,
-                 num_sensors: int, std, mean, trained_epoch: int = 0):
+    def __init__(self, adj_mat: np.ndarray, train_loader: SensorLoader, val_loader: SensorLoader,
+                 test_loader: SensorLoader, input_dim: int, output_dim: int, horizon: int, seq_size: int,
+                 num_sensors: int, std, mean, cp_path: str, trained_epoch: int = 0):
         self.model: DCRNN = DCRNN(adj_mat, {}).to(DEVICE)
+        self.cp_path = cp_path
         if trained_epoch != 0:
             self.load_model(trained_epoch)
         self.writer = SummaryWriter(f"runs/{LOG_PATH}")
@@ -54,13 +29,13 @@ class TrainScheduler:
         self.num_sensors = num_sensors
         self.std = std
         self.mean = mean
-        self.trained_batch = trained_epoch * train_loader.num_batches
+        self.trained_batch = trained_epoch * train_loader.num_batch
 
     def inv_transform(self, data):
         return (data * self.std) + self.mean
 
     def load_model(self, epoch: int):
-        return self.model.load_state_dict(torch.load(f"{CP_PATH}/{epoch}.pth", map_location="cpu"))
+        return self.model.load_state_dict(torch.load(f"{self.cp_path}/{epoch}.pth", map_location="cpu"))
 
     def save_model(self, model_path: str):
         torch.save(self.model.state_dict(), model_path)
@@ -97,7 +72,7 @@ class TrainScheduler:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), grad_clipping)
                 opt.step()
-            batch_sofar += self.dataloader["train"].num_batches
+            batch_sofar += self.dataloader["train"].num_batch
             lr_scheduler.step()
             val_loss = self.evaluate(e, "val")
             self.writer.add_scalar("Validation loss", val_loss, batch_sofar)

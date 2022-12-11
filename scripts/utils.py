@@ -2,12 +2,36 @@ import pandas as pd
 from typing import List, Tuple, Dict
 import numpy as np
 import torch
+from torch.utils.data import DataLoader, IterableDataset
 from scipy.sparse import linalg
 import scipy.sparse as sp
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 LOG_PATH = ""
 CP_PATH = "checkpoints"
+
+
+class SensorLoader:
+    def __init__(self, features, labels, batch_size=64):
+        super().__init__()
+        self.features = features
+        self.labels = labels
+        self.num_rows = len(self.features)
+        self.batch_size = batch_size
+        self.num_batch = int(np.ceil(self.num_rows / batch_size))
+
+    def __iter__(self):
+        for b in range(self.num_batch):
+            st, ed = b * self.batch_size, (b + 1) * self.batch_size
+            print(st, ed)
+            if ed > self.num_rows:
+                pad_size = ed - self.num_rows
+                f = np.concatenate([self.features[st: ed, ...], np.repeat(self.features[-1:], pad_size, axis=0)],
+                                   axis=0)
+                lb = np.concatenate([self.labels[st: ed, ...], np.repeat(self.labels[-1:], pad_size, axis=0)], axis=0)
+                yield f, lb
+            else:
+                yield self.features[st: ed, ...], self.labels[st: ed, ...]
 
 
 class EarlyStopper:
@@ -143,14 +167,13 @@ def generate_data(df, x_length, y_length):
     y = np.stack(y, axis=0)
     return x, y
 
+
 def split_dataset(x, y):
     num_samples = x.shape[0]
     num_test = round(num_samples * 0.2)
     num_train = round(num_samples * 0.7)
     num_val = num_samples - num_test - num_train
-    num_test, num_train, num_val
-    train_list, val_list, test_list = [], [], []
-    
+
     x_train, y_train = x[:num_train], y[:num_train]
     # val
     x_val = x[num_train: num_train + num_val]
@@ -158,16 +181,9 @@ def split_dataset(x, y):
     # test
     x_test, y_test = x[-num_test:], y[-num_test:]
 
-    train_list.append(x_train)
-    train_list.append(y_train)
-    #print(train_list)
-    
-    val_list.append(x_val)
-    val_list.append(y_val)
-    #print(val_list)
-    
-    test_list.append(x_test)
-    test_list.append(y_test)
-    #print(test_list)
-    
-    return train_list, val_list, test_list
+    return SensorLoader(x_train, y_train), SensorLoader(x_val, y_val), SensorLoader(x_test, y_test)
+
+
+def load_dataset(data_path: str = "Dataset/pems_all_2022_updated.h5", x_len=12, y_len=12):
+    x, y = generate_data(pd.HDFStore(data_path)["speed"], x_len, y_len)
+    return split_dataset(x, y)
