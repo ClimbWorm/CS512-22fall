@@ -22,15 +22,13 @@ class SensorDataloader:
             self.features = features
             self.labels = labels
         self.num_rows = len(self.features)  # after padding
-        if shuffle:
-            perm = np.random.permutation(self.num_rows)
-            self.features, self.labels = self.features[perm], self.labels[perm]
+        self.perm = np.random.permutation(self.num_rows) if shuffle else list(range(self.num_rows))
         self.num_batches = self.num_rows // self.batch_size
 
     def gen_sample(self):
         for b in range(self.num_batches):
             st, ed = b * self.batch_size, (b + 1) * self.batch_size
-            yield self.features[st: ed, ...], self.labels[st: ed, ...]
+            yield self.features[self.perm[st: ed], ...], self.labels[self.perm[st: ed], ...]
 
     def __iter__(self):
         return self.gen_sample()
@@ -189,4 +187,3 @@ def split_dataset(x, y):
 def load_dataset(data_path: str = "Dataset/pems_all_2022_updated.h5", x_len=12, y_len=12):
     x, y = generate_data(pd.HDFStore(data_path)["speed"], x_len, y_len)
     return split_dataset(x, y)
-
