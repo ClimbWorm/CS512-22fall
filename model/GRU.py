@@ -179,9 +179,9 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         if self._activation is not None:
             c = self._activation(c)
 
-        # new_state = u * hx + (1.0 - u) * c #original code
+        new_state = u * hx + (1.0 - u) * c #original code
         # calculate hidden state at next time step
-        new_state = (1.0 - u) * hx + u * c
+        # new_state = (1.0 - u) * hx + u * c
 
         return new_state
 
