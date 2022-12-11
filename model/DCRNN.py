@@ -1,9 +1,26 @@
 import torch
 import torch.nn as nn
-from GRU import GRUCell,GRUHelper
+from GRU import GRUCell,ArgsReader
+from typing import List, Tuple, Dict
 
 
-<<<<<<< HEAD
+# sequence of gru units
+class GRUHelper:
+    """
+    parameters for GRUCell
+    """
+
+    def __init__(self, adj_mx: List[List[float]], model_kwargs: ArgsReader):
+        self.arguments = model_kwargs
+        self.adj_mx = adj_mx
+        self.max_diffusion_step = int(model_kwargs.get_model().get('max_diffusion_step', 2))
+        self.cl_decay_steps = int(model_kwargs.get_model().get('cl_decay_steps', 1000))
+        self.filter_type = model_kwargs.get_model().get('filter_type', 'laplacian')
+        self.num_nodes = int(model_kwargs.get_model().get('num_nodes', 1))
+        self.num_rnn_layers = int(model_kwargs.get_model().get('num_rnn_layers', 1))
+        self.rnn_units = int(model_kwargs.get_model().get('rnn_units'))
+        self.hidden_state_size = self.num_nodes * self.rnn_units
+
 
 
 class Encoder(nn.Module,GRUHelper):
@@ -19,7 +36,7 @@ class Encoder(nn.Module,GRUHelper):
                        filter_type=self.filter_type) for _ in range(self.num_rnn_layers)])
 
 
-class DecoderModel(nn.Module, GRUHelper):
+class Decoder(nn.Module, GRUHelper):
     def __init__(self, adj_mx, model_kwargs):
         # super().__init__(is_training, adj_mx, **model_kwargs)
         nn.Module.__init__(self)
@@ -31,15 +48,6 @@ class DecoderModel(nn.Module, GRUHelper):
         self.dcgru_layers = nn.ModuleList(
             [GRUCell(self.rnn_units, adj_mx, self.max_diffusion_step, self.num_nodes,
                        filter_type=self.filter_type) for _ in range(self.num_rnn_layers)])
-
-=======
-class Encoder(nn.Module):
-    pass
->>>>>>> 40786f99e872c9e5c9cdcc032bc42f87c6f524f4
-
-
-class Decoder(nn.Module):
-    pass
 
 
 class DCRNN(nn.Module):

@@ -88,22 +88,7 @@ class ArgsReader:
         return self.train_config['train']
 
 
-# sequence of gru units
-class GRUHelper:
-    """
-    parameters for GRUCell
-    """
 
-    def __init__(self, adj_mx: List[List[float]], model_kwargs: ArgsReader):
-        self.arguments = model_kwargs
-        self.adj_mx = adj_mx
-        self.max_diffusion_step = int(model_kwargs.get_model().get('max_diffusion_step', 2))
-        self.cl_decay_steps = int(model_kwargs.get_model().get('cl_decay_steps', 1000))
-        self.filter_type = model_kwargs.get_model().get('filter_type', 'laplacian')
-        self.num_nodes = int(model_kwargs.get_model().get('num_nodes', 1))
-        self.num_rnn_layers = int(model_kwargs.get_model().get('num_rnn_layers', 1))
-        self.rnn_units = int(model_kwargs.get_model().get('rnn_units'))
-        self.hidden_state_size = self.num_nodes * self.rnn_units
 
 
 class GRUCell(nn.Module):  # diffusion convolution GRU
