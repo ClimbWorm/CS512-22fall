@@ -135,7 +135,7 @@ class DCRNN(nn.Module, GRUHelper):
         """
         encoder_hidden_state = None
         for t in range(self.encoder.seq_size):
-            _, encoder_hidden_state = self.encoder_model(inputs[t], encoder_hidden_state)
+            _, encoder_hidden_state = self.encoder(inputs[t], encoder_hidden_state)
         return encoder_hidden_state
 
     def decoder_forward(self, encoder_hidden_state, labels=None, batches_at=None):
