@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from GRU import GRUCell, ArgsReader
+from model.GRU import GRUCell, ArgsReader
 from typing import List, Tuple, Dict
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
