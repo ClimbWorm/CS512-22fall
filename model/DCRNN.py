@@ -3,6 +3,7 @@ import torch.nn as nn
 from GRU import GRUCell,GRUHelper
 
 
+<<<<<<< HEAD
 
 
 class Encoder(nn.Module,GRUHelper):
@@ -31,12 +32,15 @@ class DecoderModel(nn.Module, GRUHelper):
             [GRUCell(self.rnn_units, adj_mx, self.max_diffusion_step, self.num_nodes,
                        filter_type=self.filter_type) for _ in range(self.num_rnn_layers)])
 
+=======
+class Encoder(nn.Module):
+    pass
+>>>>>>> 40786f99e872c9e5c9cdcc032bc42f87c6f524f4
 
 
 class Decoder(nn.Module):
-
-
-
+    pass
 
 
 class DCRNN(nn.Module):
+    pass

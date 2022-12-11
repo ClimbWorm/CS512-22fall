@@ -64,3 +64,45 @@ def calculate_scaled_laplacian(adj_mx, lambda_max=2, undirected=True):
     I = sp.identity(M, format='csr', dtype=L.dtype)
     L = (2 / lambda_max * L) - I
     return L.astype(np.float32)
+
+"""
+Input: dataframe df, input time length, output(predict) time length
+Output: train data x, result(label) y
+"""
+# This only works for time_in_day. Each time t= 5mins
+# x_offsets: input data time length, ex: x_length = 12 = 12*5 = 60 mins, 
+# x_offsets = [-11, -10, ..., 0].
+# y_offsets:  output data time length, ex: y_length = 12 = 12*5 = 60 mins,
+# y_offsets[1, 2, 3, ..., 12]. Predict next one hour.
+def generate_data(df, x_length, y_length):
+    n_samples, n_nodes = df.shape
+    x_offsets = np.sort(np.arange(-x_length+1, 1, 1))
+    y_offsets = np.sort(np.arange(1, y_length+1, 1))
+
+    # Slice df by rows(different time slot)
+    # This only contain the speed data for 319 sensors at the same time.
+    data = np.expand_dims(df.values, axis=-1)
+    data_list = [data]
+
+    # Rewrite datetime format into numbers.
+    # And pivoted the new time array.(a time data for each sensor)
+    time_in_number = (df.index.values - df.index.values.astype("datetime64[D]")) / np.timedelta64(1, "D")
+    time_array = np.tile(time_in_number, [1, n_nodes, 1]).transpose((2, 1, 0))
+    data_list.append(time_array)
+    data = np.concatenate(data_list, axis=-1)
+
+    #Split datalist by x,ys' offset.
+    # epoch_len = num_samples + min(x_offsets) - max(y_offsets)
+    x, y = [], []
+    # t is the index of the last observation.
+    min_t = abs(min(x_offsets))
+    max_t = abs(n_samples - abs(max(y_offsets)))
+    for t in range(min_t, max_t):
+        x_t = data[t + x_offsets, ...]
+        y_t = data[t + y_offsets, ...]
+        x.append(x_t)
+        y.append(y_t)
+    x = np.stack(x, axis=0)
+    y = np.stack(y, axis=0)
+    return x, y
+
