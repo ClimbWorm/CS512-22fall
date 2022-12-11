@@ -88,7 +88,7 @@ class TrainScheduler:
                 summary += f", Test loss: {test_loss}"
             print(summary)
             if e % save_per_epoch + 1 == save_per_epoch:
-                self.save_model(f"checkpoints/epoch_{e}.pth")
+                self.save_model(f"{self.cp_path}/epoch_{e}.pth")
 
     def evaluate(self, epoch, dataset: str) -> float:
         with torch.no_grad():
