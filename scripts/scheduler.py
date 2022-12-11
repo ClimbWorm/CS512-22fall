@@ -1,15 +1,15 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, CP_PATH, SensorDataloader
+from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, CP_PATH, SensorLoader
 from typing import Optional, Union, Any, Dict, Tuple
 from model.DCRNN import DCRNN
 from tqdm import tqdm
 
 
 class TrainScheduler:
-    def __init__(self, adj_mat: np.ndarray, train_loader: SensorDataloader, val_loader: SensorDataloader,
-                 test_loader: SensorDataloader, input_dim: int, output_dim: int, horizon: int, seq_size: int,
+    def __init__(self, adj_mat: np.ndarray, train_loader: SensorLoader, val_loader: SensorLoader,
+                 test_loader: SensorLoader, input_dim: int, output_dim: int, horizon: int, seq_size: int,
                  num_sensors: int, std, mean, trained_epoch: int = 0):
         self.model: DCRNN = DCRNN(adj_mat, {}).to(DEVICE)
         if trained_epoch != 0:
@@ -28,7 +28,7 @@ class TrainScheduler:
         self.num_sensors = num_sensors
         self.std = std
         self.mean = mean
-        self.trained_batch = trained_epoch * train_loader.num_batches
+        self.trained_batch = trained_epoch * train_loader.num_batch
 
     def inv_transform(self, data):
         return (data * self.std) + self.mean
@@ -71,7 +71,7 @@ class TrainScheduler:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), grad_clipping)
                 opt.step()
-            batch_sofar += self.dataloader["train"].num_batches
+            batch_sofar += self.dataloader["train"].num_batch
             lr_scheduler.step()
             val_loss = self.evaluate(e, "val")
             self.writer.add_scalar("Validation loss", val_loss, batch_sofar)
