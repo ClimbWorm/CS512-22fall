@@ -76,13 +76,17 @@ class TrainScheduler:
             batch_sofar += self.dataloader["train"].num_batch
             lr_scheduler.step()
             val_loss = self.evaluate(e, "val")
+            train_loss = np.mean(losses)
             self.writer.add_scalar("Validation loss", val_loss, batch_sofar)
-            self.writer.add_scalar("Train loss", np.mean(losses), batch_sofar)
+            self.writer.add_scalar("Train loss", train_loss, batch_sofar)
+            summary = f"Train loss: {train_loss}, Validation loss: {val_loss}"
             if early_stop is not None and early_stop.early_stop(val_loss):
                 break
             if e % test_per_epoch + 1 == test_per_epoch:
                 test_loss = self.evaluate(e, "test")
                 self.writer.add_scalar("Test loss", test_loss, batch_sofar)
+                summary += f", Test loss: {test_loss}"
+            print(summary)
             if e % save_per_epoch + 1 == save_per_epoch:
                 self.save_model(f"checkpoints/epoch_{e}.pth")
 
