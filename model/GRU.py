@@ -165,7 +165,7 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         # return shape (batch_size,num_nodes,output_size/rnn_units)
         value = torch.sigmoid(
             fn(inputs=inputs, state=hx, output_size=output_size, bias_init=1.0))  # todo _fc里面已经自带sigmoid
-        # value = torch.reshape(value, (-1, self._num_nodes, output_size)) # original
+        value = torch.reshape(value, (-1, self._num_nodes, output_size)) # original
 
         # split into reset and update gate by the last dimension, namely output_size todo 直接这样分开的话r和u的结构能一样吗？
         r, u = torch.split(tensor=value, split_size_or_sections=self._num_units, dim=-1)
@@ -210,7 +210,7 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         value = torch.sigmoid(torch.matmul(inputs_and_state, weights))  # todo why sigmoid here but not in _gc?
         biases = self._fc_params.get_biases(output_size, bias_init)
         value += biases
-        value = torch.reshape(value, (batch_size, self._num_nodes * output_size))
+        # value = torch.reshape(value, (batch_size, self._num_nodes * output_size))
         return value
 
     @staticmethod
