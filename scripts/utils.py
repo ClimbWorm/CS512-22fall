@@ -9,6 +9,35 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 LOG_PATH = ""
 
 
+class EarlyStopper:
+    """Reference: https://stackoverflow.com/questions/71998978/early-stopping-in-pytorch"""
+
+    def __init__(self, patience, min_delta):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = np.inf
+
+    def early_stop(self, validation_loss: float) -> bool:
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
+
+
+def compute_mae_loss(pred, label):
+    """Masked MAE loss"""
+    mask = (label != 0).float()
+    mask /= mask.mean()
+    loss = torch.abs(pred - label) * mask
+    loss[loss != loss] = 0  # nan to 0
+    return loss.mean()
+
+
 def gen_adj_mat(dist: pd.DataFrame, sensor_ids: List[int], k: float = 0.1) -> Tuple[Dict[int, int], np.ndarray]:
     """Generate the adjacent matrix and sensor id mapping based on the data.
     :param dist: DataFrame of distance. Columns: [from(sensor id), to(sensor id), distance(float)]
