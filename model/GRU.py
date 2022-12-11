@@ -179,9 +179,9 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         if self._activation is not None:
             c = self._activation(c)
 
-        new_state = u * hx + (1.0 - u) * c #original code
+        # new_state = u * hx + (1.0 - u) * c #original code
         # calculate hidden state at next time step
-        # new_state = (1.0 - u) * hx + u * c
+        new_state = (1.0 - u) * hx + u * c
 
         return new_state
 
@@ -210,7 +210,7 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         value = torch.sigmoid(torch.matmul(inputs_and_state, weights))  # todo why sigmoid here but not in _gc?
         biases = self._fc_params.get_biases(output_size, bias_init)
         value += biases
-        value = torch.reshape(value, (batch_size, self._num_nodes, output_size))
+        value = torch.reshape(value, (batch_size, self._num_nodes * output_size))
         return value
 
     @staticmethod
@@ -280,5 +280,5 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         biases = self._gc_params.get_biases(output_size, bias_init)
         x += biases
         # Reshape res to 2D: (batch_size, num_node, state_dim) -> (batch_size, num_node * state_dim)
-        x = torch.reshape(x, (batch_size, self._num_nodes, output_size))
+        x = torch.reshape(x, (batch_size, self._num_nodes * output_size))
         return x
