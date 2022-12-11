@@ -142,3 +142,32 @@ def generate_data(df, x_length, y_length):
     x = np.stack(x, axis=0)
     y = np.stack(y, axis=0)
     return x, y
+
+def split_dataset(x, y):
+    num_samples = x.shape[0]
+    num_test = round(num_samples * 0.2)
+    num_train = round(num_samples * 0.7)
+    num_val = num_samples - num_test - num_train
+    num_test, num_train, num_val
+    train_list, val_list, test_list = [], [], []
+    
+    x_train, y_train = x[:num_train], y[:num_train]
+    # val
+    x_val = x[num_train: num_train + num_val]
+    y_val = y[num_train: num_train + num_val]
+    # test
+    x_test, y_test = x[-num_test:], y[-num_test:]
+
+    train_list.append(x_train)
+    train_list.append(y_train)
+    #print(train_list)
+    
+    val_list.append(x_val)
+    val_list.append(y_val)
+    #print(val_list)
+    
+    test_list.append(x_test)
+    test_list.append(y_test)
+    #print(test_list)
+    
+    return train_list, val_list, test_list
