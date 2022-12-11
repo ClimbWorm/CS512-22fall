@@ -71,7 +71,7 @@ def gen_adj_mat(dist: pd.DataFrame, sensor_ids: List[int], k: float = 0.1) -> Tu
     :return: Dict map the sensor id to its index in the adj_mat, and the adj_mat
     """
     num_sensors = len(sensor_ids)
-    dist_mat: np.ndarray = np.inf * np.ones(num_sensors, num_sensors)
+    dist_mat: np.ndarray = np.inf * np.ones((num_sensors, num_sensors))
     sensor_dict = {sensor_id: idx for idx, sensor_id in enumerate(sensor_ids)}
     for from_id, to_id, distance in dist.iterrows():
         if from_id in sensor_dict and to_id in sensor_dict:
