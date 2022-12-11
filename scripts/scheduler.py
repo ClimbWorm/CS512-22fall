@@ -1,7 +1,7 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, CP_PATH, SensorLoader
+from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, SensorLoader
 from typing import Optional, Union, Any, Dict, Tuple
 from model.DCRNN import DCRNN
 from tqdm import tqdm
@@ -10,8 +10,9 @@ from tqdm import tqdm
 class TrainScheduler:
     def __init__(self, adj_mat: np.ndarray, train_loader: SensorLoader, val_loader: SensorLoader,
                  test_loader: SensorLoader, input_dim: int, output_dim: int, horizon: int, seq_size: int,
-                 num_sensors: int, std, mean, trained_epoch: int = 0):
+                 num_sensors: int, std, mean, cp_path: str, trained_epoch: int = 0):
         self.model: DCRNN = DCRNN(adj_mat, {}).to(DEVICE)
+        self.cp_path = cp_path
         if trained_epoch != 0:
             self.load_model(trained_epoch)
         self.writer = SummaryWriter(f"runs/{LOG_PATH}")
@@ -34,7 +35,7 @@ class TrainScheduler:
         return (data * self.std) + self.mean
 
     def load_model(self, epoch: int):
-        return self.model.load_state_dict(torch.load(f"{CP_PATH}/{epoch}.pth", map_location="cpu"))
+        return self.model.load_state_dict(torch.load(f"{self.cp_path}/{epoch}.pth", map_location="cpu"))
 
     def save_model(self, model_path: str):
         torch.save(self.model.state_dict(), model_path)
