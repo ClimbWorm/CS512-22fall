@@ -52,7 +52,7 @@ class TrainScheduler:
         return compute_mae_loss(self.inv_transform(pred), self.inv_transform(label))
 
     def train(self, epoch: int = 100, lr: float = 0.01, eps: float = 1e-3, steps: Tuple[int] = (20, 30, 40, 50),
-              lr_decay: float = 0.1, grad_clipping: float = 3, early_stop: Optional[EarlyStopper] = None,
+              lr_decay: float = 0.1, grad_clipping: float = 5, early_stop: Optional[EarlyStopper] = None,
               save_per_epoch: int = 3, test_per_epoch: int = 5):
         opt = torch.optim.Adam(self.model.parameters(), lr=lr, eps=eps)
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=opt, milestones=steps, gamma=lr_decay)
