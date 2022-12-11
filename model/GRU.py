@@ -52,6 +52,7 @@ class ParamsHelper:
             biases = nn.Parameter(torch.empty(length, device=device, dtype=torch.float32))
             nn.init.constant_(tensor=biases, val=init_val)
             self._rnn_network.register_parameter(name='{}_biases_{}'.format(self._name, str(length)), param=biases)
+            self._biases_dict[length] = biases
         return self._biases_dict[length]
 
 
@@ -88,12 +89,9 @@ class ArgsReader:
         return self.train_config['train']
 
 
-
-
-
 class GRUCell(nn.Module):  # diffusion convolution GRU
     def __init__(self, num_units: int, adj_mx: List[List[float]], max_diffusion_step: int, num_nodes: int,
-                 nonlinearity: str = 'tanh',filter_type: str = "laplacian",
+                 nonlinearity: str = 'tanh', filter_type: str = "laplacian",
                  use_gc_for_ru: bool = True):
         """
         :param num_units: units in the hidden state
