@@ -178,7 +178,7 @@ class DCRNN(nn.Module, GRUHelper):
         :param batches_at: batches seen till now
         :return: output: (self.horizon, batch_size, self.num_nodes * self.output_dim)
         """
-        encoder_hidden_state = self.encoder(inputs)
-        outputs = self.decoder(encoder_hidden_state, labels, batches_seen=batches_at)
+        encoder_hidden_state = self.encoder_foward(inputs)
+        outputs = self.decoder_forward(encoder_hidden_state, labels, batches_at=batches_at)
 
         return outputs
