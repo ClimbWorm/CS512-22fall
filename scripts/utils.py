@@ -23,7 +23,6 @@ class SensorLoader:
     def __iter__(self):
         for b in range(self.num_batch):
             st, ed = b * self.batch_size, (b + 1) * self.batch_size
-            print(st, ed)
             if ed > self.num_rows:
                 pad_size = ed - self.num_rows
                 f = np.concatenate([self.features[st: ed, ...], np.repeat(self.features[-1:], pad_size, axis=0)],
