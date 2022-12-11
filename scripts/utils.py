@@ -2,6 +2,7 @@ import pandas as pd
 from typing import List, Tuple, Dict
 import numpy as np
 import torch
+from torch.utils.data import DataLoader, IterableDataset
 from scipy.sparse import linalg
 import scipy.sparse as sp
 
@@ -13,22 +14,25 @@ CP_PATH = "checkpoints"
 class SensorDataloader:
     def __init__(self, features, labels, batch_size: int = 64, pad: bool = True, shuffle: bool = True):
         self.batch_size = batch_size
-        if pad:
-            # pad the last batch using the last sample
-            pad_size = (batch_size - (len(features) % batch_size)) % batch_size
-            self.features = np.concatenate([features, np.repeat(features[-1:], pad_size, axis=0)], axis=0)
-            self.labels = np.concatenate([labels, np.repeat(labels[-1:], pad_size, axis=0)], axis=0)
-        else:
-            self.features = features
-            self.labels = labels
+        self.features = features
+        self.labels = labels
         self.num_rows = len(self.features)  # after padding
-        self.perm = np.random.permutation(self.num_rows) if shuffle else list(range(self.num_rows))
-        self.num_batches = self.num_rows // self.batch_size
+        if shuffle:
+            perm = np.random.permutation(self.num_rows)
+            self.features, self.labels = self.features[perm], self.labels[perm]
+        self.num_batches = np.ceil(self.num_rows / self.batch_size)
 
     def gen_sample(self):
         for b in range(self.num_batches):
             st, ed = b * self.batch_size, (b + 1) * self.batch_size
-            yield self.features[self.perm[st: ed], ...], self.labels[self.perm[st: ed], ...]
+            if ed < self.num_rows:
+                pad_size = self.num_rows - ed
+                f = np.concatenate([self.features[st: ed, ...], np.repeat(self.features[-1:], pad_size, axis=0)],
+                                   axis=0)
+                lb = np.concatenate([self.labels[st: ed, ...], np.repeat(self.labels[-1:], pad_size, axis=0)], axis=0)
+                yield f, lb
+            else:
+                yield self.features[st: ed, ...], self.labels[st: ed, ...]
 
     def __iter__(self):
         return self.gen_sample()
