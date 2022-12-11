@@ -184,3 +184,9 @@ def split_dataset(x, y):
     x_test, y_test = x[-num_test:], y[-num_test:]
 
     return SensorDataloader(x_train, y_train), SensorDataloader(x_val, y_val), SensorDataloader(x_test, y_test)
+
+
+def load_dataset(data_path: str = "Dataset/pems_all_2022_updated.h5", x_len=12, y_len=12):
+    x, y = generate_data(pd.HDFStore(data_path)["speed"], x_len, y_len)
+    return split_dataset(x, y)
+
