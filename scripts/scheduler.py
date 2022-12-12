@@ -56,7 +56,9 @@ class TrainScheduler:
               lr_decay: float = 0.1, grad_clipping: float = 5, early_stop: Optional[EarlyStopper] = None,
               save_per_epoch: int = 3, test_per_epoch: int = 5):
         opt = torch.optim.Adam(self.model.parameters(), lr=lr, eps=eps)
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=opt, milestones=steps, gamma=lr_decay)
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=opt,
+                                                            milestones=[s * self.batch_size for s in steps],
+                                                            gamma=lr_decay)
         batch_sofar = self.trained_batch
         for e in range(epoch):
             self.model.train()
@@ -72,9 +74,9 @@ class TrainScheduler:
                 losses.append(loss.item())
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), grad_clipping)
-                opt.step()
                 batch_sofar += 1
-            lr_scheduler.step()
+                opt.step()
+                lr_scheduler.step()
             val_loss = self.evaluate(e, "val")
             train_loss = np.mean(losses)
             self.writer.add_scalar("Validation loss", val_loss, batch_sofar)
