@@ -12,11 +12,12 @@ CP_PATH = "checkpoints"
 
 
 class SensorLoader:
-    def __init__(self, features, labels, batch_size=64):
+    def __init__(self, features, labels, batch_size=64, shuffle=False):
         super().__init__()
-        self.features = features
-        self.labels = labels
-        self.num_rows = len(self.features)
+        self.num_rows = len(features)
+        perm = np.random.permutation(self.num_rows)
+        self.features = features if not shuffle else features[perm]
+        self.labels = labels if not shuffle else labels[perm]
         self.batch_size = batch_size
         self.num_batch = int(np.ceil(self.num_rows / batch_size))
 
@@ -180,8 +181,8 @@ def split_dataset(x, y, batch_size):
     # test
     x_test, y_test = x[-num_test:], y[-num_test:]
 
-    return SensorLoader(x_train, y_train, batch_size=batch_size), \
-           SensorLoader(x_val, y_val, batch_size=batch_size), \
+    return SensorLoader(x_train, y_train, batch_size=batch_size, shuffle=True), \
+           SensorLoader(x_val, y_val, batch_size=batch_size, shuffle=False), \
            SensorLoader(x_test, y_test, batch_size=batch_size)
 
 
