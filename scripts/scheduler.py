@@ -97,3 +97,16 @@ class TrainScheduler:
                 loss = self.compute_loss(out, label)
                 losses.append(loss.item())
         return np.mean(losses)
+
+    def predict(self):
+        labels, pred = [], []
+        with torch.no_grad():
+            self.model.eval()
+            for batch, (feature, label) in enumerate(tqdm(self.dataloader["test"], desc="Predict on Test")):
+                feature, label = self.format_input(feature, label)
+                out = self.model(feature)
+                labels.append(label.cpu())
+                pred.append(out.cpu())
+        labels, pred = np.concatenate(labels, axis=1), np.concatenate(pred, axis=1)
+        return [self.inv_transform(labels[t]) for t in range(labels.shape[0])], \
+               [self.inv_transform(pred[t]) for t in range(pred.shape[0])]
