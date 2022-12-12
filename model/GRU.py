@@ -52,6 +52,7 @@ class ParamsHelper:
             biases = nn.Parameter(torch.empty(length, device=device, dtype=torch.float32))
             nn.init.constant_(tensor=biases, val=init_val)
             self._rnn_network.register_parameter(name='{}_biases_{}'.format(self._name, str(length)), param=biases)
+            self._biases_dict[length] = biases
         return self._biases_dict[length]
 
 
@@ -88,12 +89,9 @@ class ArgsReader:
         return self.train_config['train']
 
 
-
-
-
 class GRUCell(nn.Module):  # diffusion convolution GRU
     def __init__(self, num_units: int, adj_mx: List[List[float]], max_diffusion_step: int, num_nodes: int,
-                 nonlinearity: str = 'tanh',filter_type: str = "laplacian",
+                 nonlinearity: str = 'tanh', filter_type: str = "laplacian",
                  use_gc_for_ru: bool = True):
         """
         :param num_units: units in the hidden state
@@ -167,7 +165,7 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         # return shape (batch_size,num_nodes,output_size/rnn_units)
         value = torch.sigmoid(
             fn(inputs=inputs, state=hx, output_size=output_size, bias_init=1.0))  # todo _fc里面已经自带sigmoid
-        # value = torch.reshape(value, (-1, self._num_nodes, output_size)) # original
+        value = torch.reshape(value, (-1, self._num_nodes, output_size)) # original
 
         # split into reset and update gate by the last dimension, namely output_size todo 直接这样分开的话r和u的结构能一样吗？
         r, u = torch.split(tensor=value, split_size_or_sections=self._num_units, dim=-1)
@@ -212,7 +210,7 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         value = torch.sigmoid(torch.matmul(inputs_and_state, weights))  # todo why sigmoid here but not in _gc?
         biases = self._fc_params.get_biases(output_size, bias_init)
         value += biases
-        value = torch.reshape(value, (batch_size, self._num_nodes, output_size))
+        # value = torch.reshape(value, (batch_size, self._num_nodes * output_size))
         return value
 
     @staticmethod
@@ -282,5 +280,5 @@ class GRUCell(nn.Module):  # diffusion convolution GRU
         biases = self._gc_params.get_biases(output_size, bias_init)
         x += biases
         # Reshape res to 2D: (batch_size, num_node, state_dim) -> (batch_size, num_node * state_dim)
-        x = torch.reshape(x, (batch_size, self._num_nodes, output_size))
+        x = torch.reshape(x, (batch_size, self._num_nodes * output_size))
         return x
