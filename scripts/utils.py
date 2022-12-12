@@ -106,7 +106,7 @@ def calculate_random_walk_matrix(adj_mx):
     d_inv[np.isinf(d_inv)] = 0.
     d_mat_inv = sp.diags(d_inv)
     random_walk_mx = d_mat_inv.dot(adj_mx).tocoo()
-    return random_walk_mx
+    return random_walk_mx.astype(np.float32)
 
 
 def calculate_scaled_laplacian(adj_mx, lambda_max=2, undirected=True):
