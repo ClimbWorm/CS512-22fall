@@ -39,5 +39,5 @@ if __name__ == "__main__":
                                mean=train.features[..., 0].mean(), cp_path=CP_PATH, cl_decay_steps=CL_DECAY_STEPS,
                                gru_args=GRU_ARGS)
     # scheduler.train(epoch=2, early_stop=ES)
-    label, pred = scheduler.predict()
+    label, pred = scheduler.predict("test")
     print(label, pred)
