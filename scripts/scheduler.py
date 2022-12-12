@@ -57,10 +57,10 @@ class TrainScheduler:
               save_per_epoch: int = 3, test_per_epoch: int = 5):
         opt = torch.optim.Adam(self.model.parameters(), lr=lr, eps=eps)
         lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=opt, milestones=steps, gamma=lr_decay)
+        batch_sofar = self.trained_batch
         for e in range(epoch):
             self.model.train()
             losses = []
-            batch_sofar = self.batch_size
             for feature, label in tqdm(self.dataloader["train"], desc=f"Epoch {e}/Train: "):
                 feature, label = self.format_input(feature, label)
                 opt.zero_grad()
