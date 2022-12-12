@@ -16,7 +16,7 @@ class TrainScheduler:
         self.cp_path = cp_path
         if trained_epoch != 0:
             self.load_model(trained_epoch)
-        self.writer = SummaryWriter(f"runs/{LOG_PATH}")
+        self.writer = SummaryWriter()
         self.dataloader = {
             "train": train_loader,
             "val": val_loader,
@@ -56,28 +56,22 @@ class TrainScheduler:
               lr_decay: float = 0.1, grad_clipping: float = 5, early_stop: Optional[EarlyStopper] = None,
               save_per_epoch: int = 3, test_per_epoch: int = 5):
         opt = torch.optim.Adam(self.model.parameters(), lr=lr, eps=eps)
-        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=opt,
-                                                            milestones=[s * self.batch_size for s in steps],
-                                                            gamma=lr_decay)
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer=opt, milestones=steps, gamma=lr_decay)
         batch_sofar = self.trained_batch
         for e in range(epoch):
             self.model.train()
             losses = []
             for feature, label in tqdm(self.dataloader["train"], desc=f"Epoch {e}/Train: "):
-                feature, label = self.format_input(feature, label)
                 opt.zero_grad()
-                out = self.model(feature, label, batch_sofar)
-                if batch_sofar == 0:
-                    # FIXME what is this??
-                    opt = torch.optim.Adam(self.model.parameters(), lr=lr, eps=eps)
+                feature, label = self.format_input(feature, label)
                 loss = self.compute_loss(out, label)
                 losses.append(loss.item())
                 loss.backward()
-                torch.nn.utils.clip_grad_norm(self.model.parameters(), grad_clipping)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clipping)
                 batch_sofar += 1
                 opt.step()
-                lr_scheduler.step()
             val_loss = self.evaluate(e, "val")
+            lr_scheduler.step()
             train_loss = np.mean(losses)
             self.writer.add_scalar("Validation loss", val_loss, batch_sofar)
             self.writer.add_scalar("Train loss", train_loss, batch_sofar)
