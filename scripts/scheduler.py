@@ -64,6 +64,7 @@ class TrainScheduler:
             for feature, label in tqdm(self.dataloader["train"], desc=f"Epoch {e}/Train: "):
                 opt.zero_grad()
                 feature, label = self.format_input(feature, label)
+                out = self.model(feature, label, batch_sofar)
                 loss = self.compute_loss(out, label)
                 losses.append(loss.item())
                 loss.backward()
