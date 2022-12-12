@@ -73,7 +73,7 @@ class TrainScheduler:
                 loss.backward()
                 torch.nn.utils.clip_grad_norm(self.model.parameters(), grad_clipping)
                 opt.step()
-            batch_sofar += self.dataloader["train"].num_batch
+                batch_sofar += 1
             lr_scheduler.step()
             val_loss = self.evaluate(e, "val")
             train_loss = np.mean(losses)
