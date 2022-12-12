@@ -15,9 +15,11 @@ class SensorLoader:
     def __init__(self, features, labels, batch_size=64, shuffle=False):
         super().__init__()
         self.num_rows = len(features)
-        perm = np.random.permutation(self.num_rows)
-        self.features = features if not shuffle else features[perm]
-        self.labels = labels if not shuffle else labels[perm]
+        self.features = features
+        self.labels = labels
+        if shuffle:
+            np.random.shuffle(self.features)
+            np.random.shuffle(self.labels)
         self.batch_size = batch_size
         self.num_batch = int(np.ceil(self.num_rows / batch_size))
 
