@@ -15,8 +15,6 @@ class TrainScheduler:
 
         self.model: DCRNN = DCRNN(adj_mat, gru_args=gru_args, cl_decay_steps=cl_decay_steps).to(DEVICE)
         self.cp_path = cp_path
-        if trained_epoch != 0:
-            self.load_model(trained_epoch)
         self.writer = SummaryWriter()
         self.std, self.mean = std, mean
         self.dataloader = {
@@ -31,8 +29,16 @@ class TrainScheduler:
         self.seq_size = seq_size
         self.num_sensors = num_sensors
         self.trained_batch = trained_epoch * train_loader.num_batch
+        if trained_epoch != 0:
+            self.load_model(trained_epoch)
 
     def load_model(self, epoch: int):
+        with torch.no_grad():
+            self.model.eval()
+            for batch, (feature, label) in enumerate(tqdm(self.dataloader["val"], desc=f"Init graph")):
+                feature, label = self.format_input(feature, label)
+                self.model(feature)
+                break
         return self.model.load_state_dict(torch.load(f"{self.cp_path}/epoch_{epoch}.pth", map_location="cpu"))
 
     def save_model(self, model_path: str):
