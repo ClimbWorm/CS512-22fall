@@ -204,3 +204,7 @@ def split_dataset(x, y, batch_size):
 def load_dataset(data_path: str, x_len=12, y_len=12, batch_size=64):
     x, y = generate_data(pd.HDFStore(data_path)["speed"], x_len, y_len)
     return split_dataset(x, y, batch_size=batch_size)
+
+
+if __name__ == "__main__":
+    load_dataset("../Dataset/pems_all_2022_nonnan.h5")

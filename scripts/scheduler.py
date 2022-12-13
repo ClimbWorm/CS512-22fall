@@ -8,7 +8,8 @@ from tqdm import tqdm
 
 
 class TrainScheduler:
-    def __init__(self, adj_mat: np.ndarray, input_dim: int, output_dim: int, horizon: int, seq_size: int,
+    def __init__(self, adj_mat: np.ndarray, train_loader: SensorLoader, val_loader: SensorLoader,
+                 test_loader: SensorLoader, std, mean, input_dim: int, output_dim: int, horizon: int, seq_size: int,
                  num_sensors: int, cp_path: str, gru_args: Dict[str, Any], batch_size: int, trained_epoch: int = 0,
                  data_path: str = "Dataset/pems_all_2022_nonnan.h5", cl_decay_steps: int = 2000):
 
@@ -17,8 +18,7 @@ class TrainScheduler:
         if trained_epoch != 0:
             self.load_model(trained_epoch)
         self.writer = SummaryWriter()
-        train_loader, val_loader, test_loader, self.std, self.mean = load_dataset(data_path=data_path,
-                                                                                  batch_size=batch_size)
+        self.std, self.mean = std, mean
         self.dataloader = {
             "train": train_loader,
             "val": val_loader,

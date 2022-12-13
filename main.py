@@ -33,10 +33,11 @@ if __name__ == "__main__":
         sensor_ids = [int(sid) for sid in f.read().strip().split(",")]
     dist = pd.read_csv("Dataset/distances_bay_2017.csv")
     _, adj_mat = gen_adj_mat(dist, sensor_ids)
-
-    scheduler = TrainScheduler(adj_mat, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM, horizon=HORIZON, seq_size=SEQ_SIZE,
-                               num_sensors=len(sensor_ids), cp_path=CP_PATH, batch_size=BATCH_SIZE, data_path=DATA_PATH,
-                               cl_decay_steps=CL_DECAY_STEPS, gru_args=GRU_ARGS)
+    train, val, test, std, mean = load_dataset(DATA_PATH, batch_size=BATCH_SIZE)
+    scheduler = TrainScheduler(adj_mat, train, val, test, std, mean, input_dim=INPUT_DIM, output_dim=OUTPUT_DIM,
+                               horizon=HORIZON, seq_size=SEQ_SIZE, num_sensors=len(sensor_ids), cp_path=CP_PATH,
+                               batch_size=BATCH_SIZE, data_path=DATA_PATH, cl_decay_steps=CL_DECAY_STEPS,
+                               gru_args=GRU_ARGS)
     scheduler.train(early_stop=ES, steps=STEPS, lr=LR, eps=EPS)
     label, pred = scheduler.predict("test")
     plt.plot(label[-1][:, 222], label="Ground Truth")
