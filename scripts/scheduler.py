@@ -33,7 +33,7 @@ class TrainScheduler:
         self.trained_batch = trained_epoch * train_loader.num_batch
 
     def load_model(self, epoch: int):
-        return self.model.load_state_dict(torch.load(f"{self.cp_path}/{epoch}.pth", map_location="cpu"))
+        return self.model.load_state_dict(torch.load(f"{self.cp_path}/epoch_{epoch}.pth", map_location="cpu"))
 
     def save_model(self, model_path: str):
         torch.save(self.model.state_dict(), model_path)
