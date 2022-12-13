@@ -170,6 +170,14 @@ def generate_data(df, x_length, y_length):
     return x, y
 
 
+def inv_transform(data, std, mean):
+    return (data * std) + mean
+
+
+def transform(data, std, mean):
+    return (data - mean) / std
+
+
 def split_dataset(x, y, batch_size):
     num_samples = x.shape[0]
     num_test = round(num_samples * 0.2)
@@ -177,17 +185,22 @@ def split_dataset(x, y, batch_size):
     num_val = num_samples - num_test - num_train
 
     x_train, y_train = x[:num_train], y[:num_train]
+    std = x_train[..., 0].std()
+    mean = x_train[..., 0].mean()
+    x_train[..., 0], y_train[..., 0] = transform(x_train, std, mean)[..., 0], transform(y_train, std, mean)[..., 0]
     # val
     x_val = x[num_train: num_train + num_val]
     y_val = y[num_train: num_train + num_val]
+    x_val[..., 0], y_val[..., 0] = transform(x_val, std, mean)[..., 0], transform(y_val, std, mean)[..., 0]
     # test
     x_test, y_test = x[-num_test:], y[-num_test:]
+    x_test[..., 0], y_test[..., 0] = transform(x_test, std, mean)[..., 0], transform(y_test, std, mean)[..., 0]
 
     return SensorLoader(x_train, y_train, batch_size=batch_size, shuffle=True), \
-           SensorLoader(x_val, y_val, batch_size=batch_size, shuffle=False), \
-           SensorLoader(x_test, y_test, batch_size=batch_size)
+           SensorLoader(x_val, y_val, batch_size=batch_size), \
+           SensorLoader(x_test, y_test, batch_size=batch_size), std, mean
 
 
-def load_dataset(data_path: str = "Dataset/pems_all_2022_updated.h5", x_len=12, y_len=12, batch_size=64):
+def load_dataset(data_path: str, x_len=12, y_len=12, batch_size=64):
     x, y = generate_data(pd.HDFStore(data_path)["speed"], x_len, y_len)
     return split_dataset(x, y, batch_size=batch_size)

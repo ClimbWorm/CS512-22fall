@@ -1,22 +1,24 @@
 import torch
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, SensorLoader
+from scripts.utils import DEVICE, LOG_PATH, EarlyStopper, compute_mae_loss, SensorLoader, inv_transform, load_dataset
 from typing import Optional, Union, Any, Dict, Tuple
 from model.DCRNN import DCRNN
 from tqdm import tqdm
 
 
 class TrainScheduler:
-    def __init__(self, adj_mat: np.ndarray, train_loader: SensorLoader, val_loader: SensorLoader,
-                 test_loader: SensorLoader, input_dim: int, output_dim: int, horizon: int, seq_size: int,
-                 num_sensors: int, std, mean, cp_path: str, gru_args: Dict[str, Any], cl_decay_steps: int = 2000,
-                 trained_epoch: int = 0):
+    def __init__(self, adj_mat: np.ndarray, input_dim: int, output_dim: int, horizon: int, seq_size: int,
+                 num_sensors: int, cp_path: str, gru_args: Dict[str, Any], batch_size: int, trained_epoch: int = 0,
+                 data_path: str = "Dataset/pems_all_2022_nonnan.h5", cl_decay_steps: int = 2000):
+
         self.model: DCRNN = DCRNN(adj_mat, gru_args=gru_args, cl_decay_steps=cl_decay_steps).to(DEVICE)
         self.cp_path = cp_path
         if trained_epoch != 0:
             self.load_model(trained_epoch)
         self.writer = SummaryWriter()
+        train_loader, val_loader, test_loader, self.std, self.mean = load_dataset(data_path=data_path,
+                                                                                  batch_size=batch_size)
         self.dataloader = {
             "train": train_loader,
             "val": val_loader,
@@ -28,12 +30,7 @@ class TrainScheduler:
         self.horizon = horizon
         self.seq_size = seq_size
         self.num_sensors = num_sensors
-        self.std = std
-        self.mean = mean
         self.trained_batch = trained_epoch * train_loader.num_batch
-
-    def inv_transform(self, data):
-        return (data * self.std) + self.mean
 
     def load_model(self, epoch: int):
         return self.model.load_state_dict(torch.load(f"{self.cp_path}/{epoch}.pth", map_location="cpu"))
@@ -48,6 +45,9 @@ class TrainScheduler:
                                                                                                 self.batch_size,
                                                                                                 self.num_sensors * self.output_dim)
         return feature.to(DEVICE), label.to(DEVICE)
+
+    def inv_transform(self, data):
+        return inv_transform(data, mean=self.mean, std=self.std)
 
     def compute_loss(self, pred, label):
         return compute_mae_loss(self.inv_transform(pred), self.inv_transform(label))
